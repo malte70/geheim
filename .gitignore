@@ -1,0 +1,5 @@
+# Vim Swap file
+.*.swp
+
+# Already built test database
+test/geheim.*
