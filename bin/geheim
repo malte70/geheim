@@ -39,7 +39,21 @@ action_list() {
 action_get_node() {
 	NODE="${1:1:${#1}}"
 	[[ ${1:0:1} != "/" ]] && NODE="$1"
-	gpg --decrypt --quiet "$DATA" | tar xO "$NODE"
+	if gpg --decrypt --quiet "$DATA" | tar xO "$NODE" 2>/dev/null
+	then
+		true
+	else
+		echo "$0: Node /$NODE not found." >&2
+		exit 2
+	fi
+}
+action_remove_node() {
+	NODE="${1:1:${#1}}"
+	[[ ${1:0:1} != "/" ]] && NODE="$1"
+	gpg --decrypt --quiet <"$DATA" > "$DATA.tar"
+	rm "$DATA"
+	tar -f "$DATA.tar" --delete "$NODE"
+	gpg --encrypt --quiet $DEFAULT_KEY <"$DATA.tar" >"$DATA"
 }
 action_add_node() {
 	rm -rf "$DATA.dir"
@@ -63,6 +77,7 @@ usage() {
 	echo -e "Available actions:"
 	echo -e "\tlist         List available Nodes"
 	echo -e "\tget <node>   Get a node's contents"
+	echo -e "\trm <node>    Remove a node"
 	echo -e "\tadd <node>   Add a node."
 }
 main() {
@@ -76,6 +91,9 @@ main() {
 			;;
 		"get")
 			action_get_node $2
+			;;
+		"rm")
+			action_remove_node $2
 			;;
 		"add")
 			action_add_node $2
