@@ -25,7 +25,12 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
-DATA="$HOME/.geheim.db"
+DATA="${GEHEIM_DATA-$HOME/.geheim.db}"
+DEFAULT_KEY="$(grep default-key $HOME/.gnupg/gpg.conf | awk '{ print $2 }')"
+if [ -n $DEFAULT_KEY ]
+then
+	DEFAULT_KEY=" -r $DEFAULT_KEY"
+fi
 
 action_list() {
 	gpg --decrypt --quiet "$DATA" | tar tO 2>&1 | sed 's@^@/@g' | grep -v '/$'
@@ -36,14 +41,30 @@ action_get_node() {
 	[[ ${1:0:1} != "/" ]] && NODE="$1"
 	gpg --decrypt --quiet "$DATA" | tar xO "$NODE"
 }
+action_add_node() {
+	rm -rf "$DATA.dir"
+	mkdir "$DATA.dir"
+	gpg --decrypt --quiet <"$DATA" | tar -x -f - -C "$DATA.dir"
+	mkdir -p "${DATA}.dir$(dirname $1)"
+	touch "${DATA}.dir$1"
+	echo "Now type the content for $1."
+	while read line
+	do
+		echo $line >> "${DATA}.dir$1"
+	done
+	cd "${DATA}.dir"
+	rm "$DATA"
+	tar -c -f - * | gpg --encrypt --quiet $DEFAULT_KEY >"$DATA"
+	rm -rf "${DATA}.dir"
+}
 
 usage() {
 	echo -e "Usage: $0 <action> [<parameters>]"
 	echo -e "Available actions:"
 	echo -e "\tlist         List available Nodes"
 	echo -e "\tget <node>   Get a node's contents"
+	echo -e "\tadd <node>   Add a node."
 }
-
 main() {
 	if [ $# -eq 0 ]; then
 		usage
@@ -55,6 +76,9 @@ main() {
 			;;
 		"get")
 			action_get_node $2
+			;;
+		"add")
+			action_add_node $2
 			;;
 		*)
 			usage >&2

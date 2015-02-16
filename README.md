@@ -25,6 +25,9 @@ it with
 If you use "install" instead of "all" in the above command, the generated
 database will be copied to it's default location.
 
+You can specify an alternate location for the database using the environment
+variable $GEHEIM\_DATA.
+
 ## Usage
 
     # List the current nodes in the password file
@@ -32,4 +35,9 @@ database will be copied to it's default location.
     
     # Get the content of a node
     geheim get /email/john@doe.name
+    
+    # Add a node
+    geheim add /email/john.doe@example.com <<EOF
+    Password: SuperSecretPassword
+    EOF
 
