@@ -1,0 +1,33 @@
+.TH geheim 1
+.SH NAME
+geheim  A simple password manager for Unix
+.SH SYNOPSIS
+.B geheim 
+.I action
+.B [
+.I parameters
+.B ]
+.SH ACTIONS
+.IP init
+Initialize the data storage
+.IP list
+List available Nodes
+.IP get
+Get a node's contents
+.IP rm
+Remove a node
+.IP add
+Add a node.
+.SH OPTIONS
+All actions except
+.I init
+and
+.I list
+require the node to operate on as a parameter.
+.SH BUGS
+When removing a node, only the node itself, but not the directory structure is
+removed. Although not shown on
+.I list
+, it exists and a node with the name of an existing directory cannot be created.
+.SH AUTHOR
+Malte Bublitz <malte70@mcbx.de>
