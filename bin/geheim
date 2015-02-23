@@ -32,6 +32,20 @@ then
 	DEFAULT_KEY=" -r $DEFAULT_KEY"
 fi
 
+action_init() {
+	if [[ -f "$DATA" ]]; then
+		echo "$DATA already exists. Not forcing overwrite." >&2
+		exit 1
+	fi
+	rm -rf "$DATA.dir"
+	mkdir "$DATA.dir"
+	mkdir -p "${DATA}.dir/test"
+	echo "Hello, World" > "${DATA}.dir/test/hello"
+	cd "${DATA}.dir"
+	tar -c -f - * | gpg --encrypt --quiet $DEFAULT_KEY >"$DATA"
+	rm -rf "${DATA}.dir"
+}
+
 action_list() {
 	gpg --decrypt --quiet "$DATA" | tar tO 2>&1 | sed 's@^@/@g' | grep -v '/$'
 }
@@ -75,6 +89,7 @@ action_add_node() {
 usage() {
 	echo -e "Usage: $0 <action> [<parameters>]"
 	echo -e "Available actions:"
+	echo -e "\tinit         Initialize the data storage"
 	echo -e "\tlist         List available Nodes"
 	echo -e "\tget <node>   Get a node's contents"
 	echo -e "\trm <node>    Remove a node"
@@ -86,6 +101,9 @@ main() {
 		exit 0
 	fi
 	case "$1" in
+		"init")
+			action_init
+			;;
 		"list")
 			action_list
 			;;
