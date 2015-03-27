@@ -71,7 +71,7 @@ action_remove_node() {
 	[[ ${1:0:1} != "/" ]] && NODE="$1"
 	gpg --decrypt --quiet <"$DATA" > "$DATA.tar"
 	rm "$DATA"
-	tar -f "$DATA.tar" --delete "$NODE"
+	tar -f "$DATA.tar" --delete --recursive-unlink "$NODE"
 	gpg --encrypt --quiet $DEFAULT_KEY <"$DATA.tar" >"$DATA"
 }
 action_add_node() {
