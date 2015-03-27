@@ -47,7 +47,12 @@ action_init() {
 }
 
 action_list() {
-	gpg --decrypt --quiet "$DATA" | tar tO 2>&1 | sed 's@^@/@g' | grep -v '/$'
+	if [[ $1 == "-a" ]]
+	then
+		gpg --decrypt --quiet "$DATA" | tar tO 2>&1 | sed 's@^@/@g'
+	else
+		gpg --decrypt --quiet "$DATA" | tar tO 2>&1 | sed 's@^@/@g' | grep -v '/$'
+	fi
 }
 
 action_get_node() {
@@ -90,7 +95,7 @@ usage() {
 	echo -e "Usage: $0 <action> [<parameters>]"
 	echo -e "Available actions:"
 	echo -e "\tinit         Initialize the data storage"
-	echo -e "\tlist         List available Nodes"
+	echo -e "\tlist [-a]    List available Nodes"
 	echo -e "\tget <node>   Get a node's contents"
 	echo -e "\trm <node>    Remove a node"
 	echo -e "\tadd <node>   Add a node."
@@ -105,7 +110,7 @@ main() {
 			action_init
 			;;
 		"list")
-			action_list
+			action_list $2
 			;;
 		"get")
 			action_get_node $2
