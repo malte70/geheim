@@ -41,6 +41,9 @@ variable $GEHEIM\_DATA.
     Password: SuperSecretPassword
     EOF
     
+    # Edit it again
+    geheim edit /email/john.doe@example.name
+
     # Remove another one
     geheim rm /email/john@doe.name
 

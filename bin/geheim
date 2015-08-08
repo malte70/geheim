@@ -25,6 +25,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
+VERSION="0.2"
+
 DATA="${GEHEIM_DATA-$HOME/.geheim.db}"
 DEFAULT_KEY="$(grep default-key $HOME/.gnupg/gpg.conf | awk '{ print $2 }')"
 if [ -n $DEFAULT_KEY ]
@@ -39,6 +41,7 @@ action_init() {
 	fi
 	rm -rf "$DATA.dir"
 	mkdir "$DATA.dir"
+	echo "version: 0.2" > $DATA.dir/.geheim.db
 	mkdir -p "${DATA}.dir/test"
 	echo "Hello, World" > "${DATA}.dir/test/hello"
 	cd "${DATA}.dir"
@@ -90,6 +93,26 @@ action_add_node() {
 	tar -c -f - * | gpg --encrypt --quiet $DEFAULT_KEY >"$DATA"
 	rm -rf "${DATA}.dir"
 }
+action_edit_node() {
+	rm -rf "$DATA.dir"
+	mkdir "$DATA.dir"
+	gpg --decrypt --quiet <"$DATA" | tar -x -f - -C "$DATA.dir"
+	f=${DATA}.dir$1
+	if [[ -n $EDITOR ]]; then
+		$EDITOR "$f"
+	elif which vim &>/dev/null; then
+		vim "$f"
+	elif which nano &>/dev/null; then
+		nano "$f"
+	else
+		echo "Error: No editor found! Set your editor in \$EDITOR and try again." >&2
+		exit 1
+	fi
+	cd "${DATA}.dir"
+	rm "$DATA"
+	tar -c -f - * | gpg --encrypt --quiet $DEFAULT_KEY >"$DATA"
+	rm -rf "${DATA}.dir"
+}
 
 usage() {
 	echo -e "Usage: $0 <action> [<parameters>]"
@@ -99,6 +122,7 @@ usage() {
 	echo -e "\tget <node>   Get a node's contents"
 	echo -e "\trm <node>    Remove a node"
 	echo -e "\tadd <node>   Add a node."
+	echo -e "\tedit <node>  Edit a node."
 }
 main() {
 	if [ $# -eq 0 ]; then
@@ -120,6 +144,9 @@ main() {
 			;;
 		"add")
 			action_add_node $2
+			;;
+		"edit")
+			action_edit_node $2
 			;;
 		*)
 			usage >&2
