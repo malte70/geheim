@@ -25,14 +25,17 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 
-VERSION="0.2"
+APP_NAME="geheim"
+APP_VERSION="0.2.1"
 
 DATA="${GEHEIM_DATA-$HOME/.geheim.db}"
-DEFAULT_KEY="$(grep default-key $HOME/.gnupg/gpg.conf | awk '{ print $2 }')"
-if [ -n $DEFAULT_KEY ]
+DEFAULT_KEY="$(grep default-key $HOME/.gnupg/gpg.conf 2>/dev/null | awk '{ print $2 }')"
+if [[ -z $DEFAULT_KEY && $(gpg -K | wc -l) -gt 1 ]]
 then
-	DEFAULT_KEY=" -r $DEFAULT_KEY"
+	DEFAULT_KEY=$(gpg -K | grep ^sec | cut -d/ -f2 | cut -c -8)
 fi
+
+DEFAULT_KEY=" -r $DEFAULT_KEY"
 
 action_init() {
 	if [[ -f "$DATA" ]]; then
@@ -114,8 +117,12 @@ action_edit_node() {
 	rm -rf "${DATA}.dir"
 }
 
+version() {
+	echo "${APP_NAME} ${APP_VERSION}"
+}
+
 usage() {
-	echo -e "Usage: $0 <action> [<parameters>]"
+	echo -e "Usage: ${APP_NAME} <action> [<parameters>]"
 	echo -e "Available actions:"
 	echo -e "\tinit         Initialize the data storage"
 	echo -e "\tlist [-a]    List available Nodes"
@@ -124,15 +131,45 @@ usage() {
 	echo -e "\tadd <node>   Add a node."
 	echo -e "\tedit <node>  Edit a node."
 }
+
+check_env() {
+	if [[ $(gpg -K | wc -l) -lt 1 ]]
+	then
+		echo -e "geheim: No private GPG keys found! Please generate one with \`gpg --gen-key\`" >&2
+		exit 1
+	fi
+	
+	if [[ ! -f $DATA ]]; then
+		echo -e "geheim: No database found. Generating it with \`$0 init\`" >&2
+		exit 1
+	fi
+}
 main() {
 	if [ $# -eq 0 ]; then
 		usage
 		exit 0
 	fi
+	
+	# Check for arguments which don't need a working database
 	case "$1" in
+		"--version"|"-V")
+			version
+			exit 0
+			;;
+		"--help"|"-h")
+			usage
+			exit 0
+			;;
 		"init")
 			action_init
 			;;
+	esac
+	
+	# Check environment
+	check_env
+	
+	# Check for arguments which DO need a working database
+	case "$1" in
 		"list")
 			action_list $2
 			;;
