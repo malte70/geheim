@@ -29,7 +29,7 @@ APP_NAME="geheim"
 APP_VERSION="0.2.1"
 
 DATA="${GEHEIM_DATA-$HOME/.geheim.db}"
-DEFAULT_KEY="$(grep default-key $HOME/.gnupg/gpg.conf 2>/dev/null | awk '{ print $2 }')"
+DEFAULT_KEY="$(grep ^default-key $HOME/.gnupg/gpg.conf 2>/dev/null | awk '{ print $2 }')"
 if [[ -z $DEFAULT_KEY && $(gpg -K | wc -l) -gt 1 ]]
 then
 	DEFAULT_KEY=$(gpg -K | grep ^sec | cut -d/ -f2 | cut -c -8)
